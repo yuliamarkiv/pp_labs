@@ -7,6 +7,10 @@ authors = ["yuliamarkiv <yulia.markiv.27@gmail.com>"]
 [tool.poetry.dependencies]
 python = "^3.8"
 Flask = "^2.0.1"
+requests = "^2.26.0"
+SQLAlchemy = "^1.4.26"
+mysqlclient = "^2.0.3"
+alembic = "^1.7.4"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

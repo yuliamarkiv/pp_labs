@@ -16,6 +16,10 @@ tags:
   description: Everything about your Ads
 - name: user
   description: Operations about user
+- name: service
+  description: Showing accessible Ads
+- name: location
+  description: Getting information about location
 
 paths: 
   /ad:
@@ -143,6 +147,133 @@ paths:
       - ad_auth:
         - write:ad
         - read:ad
+  
+  /location:
+    post:
+      tags:
+      - location
+      summary: Add a location
+      description: Adds a new location in the database
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Location'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/Location'
+      responses:
+        200:
+          description: Successfully added a new location
+        405:
+          description: Invalid input
+          content: {}
+      security:
+      - ad_auth:
+        - write:ad
+        - read:ad
+      
+  /location/{id}:
+    get:
+      tags:
+      - location
+      summary: Get a location
+      description: Obtain information about specific location
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: uuid
+            example: 4
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Location'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Location'
+        400:
+          description: Invalid ID supplied.
+          content: {}
+        404:
+          description: Location with the specified ID was not found.
+          content: {}
+      security:
+      - ad_auth:
+        - write:ad
+        - read:ad
+      
+    put:
+      tags:
+      - location
+      summary: Update a location
+      description: Update a specific location
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            example: 4
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Location'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Location'
+        400:
+          description: Invalid ID supplied.
+          content: {}
+        404:
+          description: A location with the specified ID was not found.
+          content: {}
+      security:
+      - ad_auth:
+        - write:location
+        - read:location
+    
+    delete:
+      tags:
+      - location
+      summary: Delete a location
+      description: Delete a specific location
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: uuid
+            example: 4
+            
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Location'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Location'
+        400:
+          description: Invalid ID supplied
+          content: {}
+        404:
+          description: Location not found
+          content: {}
+      security:
+        - api_key: []
   
   /user:
     post:
@@ -315,6 +446,75 @@ paths:
       security:
         - api_key: []
 
+/service/ads:
+    get:
+      tags:
+      - service
+      summary: 'Get public ads for unauthorized users'
+      operationId: getPublicAds
+      description: Get public ads for unauthorized users
+      responses:
+        201:
+          description: show public ads
+          content:
+             application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ad'
+  
+  /service/locations:
+    get:
+      tags:
+      - service
+      summary: 'Get all locations'
+      operationId: getLocations
+      description: Get all locations
+      responses:
+        201:
+          description: show all locations
+          content:
+             application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Location'
+      security:
+      - ad_auth:
+        - write:ad
+        - read:ad
+        
+  /service/user/{id}:
+    get:
+      tags:
+      - service
+      summary: Get all accessible ads for a specific user
+      description: Get both public and accessible local ads for a specific user 
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            example: 4
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ad'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Ad'
+        400:
+          description: Invalid user ID supplied
+          content: {}
+      security:
+      - ad_auth:
+        - write:ad
+        - read:ad
+
 components:
   schemas:
     Location:
@@ -325,8 +525,6 @@ components:
           format: uuid
         name:
           type: string
-      xml:
-        name: Board
     
     Ad:
       required:

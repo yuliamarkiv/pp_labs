@@ -15,15 +15,14 @@ session = Session()
 #          price='123.56', currency='USD', date='2019-05-17', location=location_1, user=user1)
 # session.add(ad1)
 # session.commit()
-
-locations = session.query(Location).all()
-users = session.query(User).all()
-ads = session.query(Ad).all()
-for location in locations:
-    print('\n', location)
-
-for user in users:
-    print('\n', user)
-
-for ad in ads:
-    print('\n', ad)
+#
+# locations = session.query(Location).all()
+# users = session.query(User).all()
+# ads = session.query(Ad).all()
+# for location in locations:
+#     print('\n', location)
+#
+# for user in users:
+#     print('\n', user)
+# for ad in ads:
+#     print('\n', ad)

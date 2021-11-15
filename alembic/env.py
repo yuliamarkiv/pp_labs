@@ -4,12 +4,20 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
+import os
+import sys
+sys.path.append("/home/yuliamarkiv/pp_labs")
 
 from models import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+
+config.set_main_option(
+    "sqlalchemy.url",
+    os.getenv("DB_URI", "mysql+mysqlconnector://root:password@localhost/pp_labs"),
+)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

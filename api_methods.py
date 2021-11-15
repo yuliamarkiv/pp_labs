@@ -4,14 +4,19 @@ from schemas import UserSchema, LocationSchema, AdSchema
 from models import *
 from marshmallow import ValidationError
 import bcrypt
-
+from flask_httpauth import HTTPBasicAuth
 app = Flask(__name__)
+auth = HTTPBasicAuth()
+session = Session()
 
-
+@auth.verify_password
+def verify_password(username, password):
+     user = session.query(User).filter_by(username = username, password= bcrypt.checkpw(password.encode("utf-8"))).first()
+     if user:
+         return user
 # USER METHODS
 @app.route('/api/v1/user', methods=["POST"])
 def create_user():
-    session = Session()
 
     data = request.get_json()
     if not data:
@@ -48,10 +53,9 @@ def create_user():
     result = UserSchema().dump(the_user)
     return jsonify(result)
 
-
+@auth.verify_password
 @app.route('/api/v1/user/login', methods=['GET'])
 def login_user():
-    session = Session()
 
     data = request.get_json()
     if not data:
@@ -70,7 +74,7 @@ def login_user():
 
 @app.route('/api/v1/user/<string:username>', methods=['GET'])
 def get_user(username):
-    session = Session()
+
 
     user_find = session.query(User).filter_by(username=username).first()
     if not user_find:
@@ -79,10 +83,10 @@ def get_user(username):
     result = UserSchema().dump(user_find)
     return jsonify(result)
 
-
+@auth.login_required
 @app.route('/api/v1/user/<string:username>', methods=['PUT'])
 def update_user(username):
-    session = Session()
+
 
     data = request.get_json()
     if not data:
@@ -124,10 +128,9 @@ def update_user(username):
 
     return jsonify(result)
 
-
+@auth.login_required
 @app.route('/api/v1/user/<string:name>', methods=['DELETE'])
 def delete_user(name):
-    session = Session()
 
     user_find = session.query(User).filter_by(name=name).first()
     if not user_find:
@@ -146,9 +149,10 @@ def delete_user(name):
 
 
 # AD METHODS
+@auth.login_required
 @app.route('/api/v1/ad', methods=['POST'])
 def create_ad():
-    session = Session()
+
 
     data = request.get_json()
     if not data:
@@ -193,10 +197,10 @@ def create_ad():
     result = AdSchema().dump(the_ad)
     return jsonify(result)
 
-
+@auth.login_required
 @app.route('/api/v1/ad/<int:id>', methods=['GET'])
 def get_ad(id):
-    session = Session()
+
 
     ad_find = session.query(Ad).filter_by(id=id).first()
     if not ad_find:
@@ -208,10 +212,10 @@ def get_ad(id):
     result = AdSchema().dump(ad_find)
     return jsonify(result)
 
-
+@auth.login_required
 @app.route('/api/v1/ad/<int:id>', methods=['PUT'])
 def update_ad(id):
-    session = Session()
+
 
     data = request.get_json()
     if not data:
@@ -248,10 +252,9 @@ def update_ad(id):
 
     return jsonify(result)
 
-
+@auth.login_required
 @app.route('/api/v1/ad/<int:id>', methods=['DELETE'])
 def delete_ad(id):
-    session = Session()
 
     ad_find = session.query(Ad).filter_by(id=id).first()
     if not ad_find:
@@ -267,7 +270,7 @@ def delete_ad(id):
 # LOCATION METHODS
 @app.route('/api/v1/location', methods=['POST'])
 def create_location():
-    session = Session()
+
 
     data = request.get_json()
     if not data:
@@ -297,7 +300,7 @@ def create_location():
 
 @app.route('/api/v1/location/<int:id>', methods=['GET'])
 def get_location(id):
-    session = Session()
+
 
     location_find = session.query(Location).filter_by(id=id).first()
     if not location_find:
@@ -306,10 +309,10 @@ def get_location(id):
     result = LocationSchema().dump(location_find)
     return jsonify(result)
 
-
+@auth.login_required
 @app.route('/api/v1/location/<int:id>', methods=['PUT'])
 def update_location(id):
-    session = Session()
+
 
     data = request.get_json()
     if not data:
@@ -351,10 +354,10 @@ def update_location(id):
 
     return jsonify(result)
 
-
+@auth.login_required
 @app.route('/api/v1/location/<int:id>', methods=['DELETE'])
 def delete_location(id):
-    session = Session()
+
 
     location_find = session.query(Location).filter_by(id=id).first()
     if not location_find:
@@ -380,7 +383,7 @@ def delete_location(id):
 # showing public notes for unauthorized users
 @app.route('/api/v1/service/ads', methods=['GET'])
 def get_public_ads():
-    session = Session()
+
 
     find_ads = session.query(Ad).filter_by(locationId=None).all()
 
@@ -391,6 +394,7 @@ def get_public_ads():
 
 
 # showing notes for authorized user (including all: public and accessible local ads for specific user)
+@auth.login_required
 @app.route('/api/v1/service/user/<int:id>', methods=['GET'])
 def get_ads_for_user(id):
     session = Session()
@@ -413,9 +417,10 @@ def get_ads_for_user(id):
 
 
 # showing locations
+@auth.login_required
 @app.route('/api/v1/service/locations', methods=['GET'])
 def get_locations():
-    session = Session()
+
 
     locations = session.query(Location).all()
 

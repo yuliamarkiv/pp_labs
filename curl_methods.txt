@@ -3,7 +3,7 @@ mysql -u root -p adservice < create_db.sql
 
 
 USER
-curl -X POST -H "Content-Type:application/json" --data-binary "{\"username\":\"Yaryna\", \"email\":\"qwerty@gmail.com\", \"password\":\"12345\", \"locationId\": 4}" http://127.0.0.1:5000/api/v1/user
+curl -X POST -H "Content-Type:application/json" --data-binary "{\"username\":\"Yaryna\", \"email\":\"qwerty@gmail.com\", \"password\":\"12345\", \"locationId\": 1}" http://127.0.0.1:5000/api/v1/user
 
 curl -X GET http://127.0.0.1:5000/api/v1/user/login -H "Content-Type:application/json" --data "{\"username\":\"Yaryna\", \"password\":\"12345\"}"
 

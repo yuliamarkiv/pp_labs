@@ -18,7 +18,7 @@ class AdSchema(Schema):
     id = fields.Int()
     name = fields.Str()
     text = fields.Str()
-    price = fields.Int()
+    price = fields.Float()
     currency = fields.Str()
     date = fields.Date()
     locationId = fields.Int()

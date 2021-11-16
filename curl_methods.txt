@@ -2,38 +2,40 @@ mysql -u root -p adservice < create_db.sql
 
 
 
-USER
+USER (AUTHORIZED)
 curl -X POST -H "Content-Type:application/json" --data-binary "{\"username\":\"Yaryna\", \"email\":\"qwerty@gmail.com\", \"password\":\"12345\", \"locationId\": 1}" http://127.0.0.1:5000/api/v1/user
+curl -X POST -H "Content-Type:application/json" --data-binary "{\"username\":\"Mia\", \"email\":\"a@gmail.com\", \"password\":\"1233\", \"locationId\": 2}" http://127.0.0.1:5000/api/v1/user
 
-curl -X GET http://127.0.0.1:5000/api/v1/user/login -H "Content-Type:application/json" --data "{\"username\":\"Yaryna\", \"password\":\"12345\"}"
+curl --user Mia:1233 --request curl -X PUT -H "Content-Type:application/json" --data-binary "{\"username\":\"Yaryna123\", \"email\":\"123qwerty@gmail.com\"}" http://127.0.0.1:5000/api/v1/user/Yaryna
 
-curl -X PUT -H "Content-Type:application/json" --data-binary "{\"username\":\"Yaryna123\", \"email\":\"qwerty12345@gmail.com\"}" http://127.0.0.1:5000/api/v1/user/Yaryna
+curl --user Yaryna:12345 --request curl -X DELETE http://127.0.0.1:5000/api/v1/user/Yaryna
+curl --user Yulia:123 --request curl -X GET http://127.0.0.1:5000/api/v1/user/Yulia
 
-curl -X DELETE http://127.0.0.1:5000/api/v1/user/1
-
-curl -X GET http://127.0.0.1:5000/api/v1/user/Yaryna123
+curl --user Yaryna:12345 --request curl -X GET http://127.0.0.1:5000/api/v1/user/Yaryna
 
 
 AD
-curl -X POST -H "Content-Type:application/json" --data-binary "{\"name\":\"Sell boots\", \"text\":\"Mustang boots with warm fur inside, size 43, manufacturer Portugal\", \"price\": \"123.56\", \"currency\":\"USD\", \"date\":\"2019-05-17\", \"locationId\": 1, \"userId\": 1}" http://127.0.0.1:5000/api/v1/ad
+AUTHORIZED
+curl --user Mia:1233 --request curl -X POST -H "Content-Type:application/json" --data-binary "{\"name\":\"Sell boots\", \"text\":\"Mustang boots with warm fur inside, size 43, manufacturer Portugal\", \"price\": \"123.56\", \"currency\":\"USD\", \"date\":\"2019-05-17\"}" http://127.0.0.1:5000/api/v1/ad
+curl --user Yulia:123 --request curl -X POST -H "Content-Type:application/json" --data-binary "{\"name\":\"Sell shoes\", \"text\":\"Sell smth\", \"price\": \"123.56\", \"currency\":\"USD\", \"date\":\"2019-05-17\"}" http://127.0.0.1:5000/api/v1/ad
 
-curl -X GET http://127.0.0.1:5000/api/v1/ad/1
+curl --user Yaryna:12345 --request curl -X GET http://127.0.0.1:5000/api/v1/ad/4
 
-curl -X PUT -H "Content-Type:application/json" --data-binary "{\"name\":\"Sell\"}" http://127.0.0.1:5000/api/v1/ad/1
+curl --user Mia:1233 --request curl -X PUT -H "Content-Type:application/json" --data-binary "{\"name\":\"Sell\"}" http://127.0.0.1:5000/api/v1/ad/2
 
-curl -X DELETE http://127.0.0.1:5000/api/v1/ad/1
+curl --user Yaryna:123455 --request  curl -X DELETE http://127.0.0.1:5000/api/v1/ad/1
+curl --user Yaryna:12345 --request  curl -X DELETE http://127.0.0.1:5000/api/v1/ad/2
 
 
 LOCATION
-curl -X POST -H "Content-Type:application/json" --data-binary "{\"name\":\"Lviv\"}" http://127.0.0.1:5000/api/v1/location
+curl --user Yaryna:123455 --request curl -X POST -H "Content-Type:application/json" --data-binary "{\"name\":\"Kyiv\"}" http://127.0.0.1:5000/api/v1/location
 
-curl -X DELETE http://127.0.0.1:5000/api/v1/location/4
 
 
 SERVICE
 curl -X GET http://127.0.0.1:5000/api/v1/service/ads
 
-curl -X GET http://127.0.0.1:5000/api/v1/service/user/1
+curl --user Mia:1233 --request curl -X GET http://127.0.0.1:5000/api/v1/service/user/2
 
 curl -X GET http://127.0.0.1:5000/api/v1/service/locations
 

@@ -332,3 +332,13 @@ def get_ads_for_user(id):
 
     return jsonify(public + local)
 
+
+# showing locations
+@app.route('/api/v1/service/locations', methods=['GET'])
+def get_locations():
+    locations = session.query(Location).all()
+
+    schema = LocationSchema(many=True)
+    result = (schema.dump(locations))
+
+    return jsonify(result)

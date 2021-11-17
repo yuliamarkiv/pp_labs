@@ -292,45 +292,6 @@ def create_location():
     result = LocationSchema().dump(the_location)
     return jsonify(result)
 
-
-@app.route('/api/v1/location/<int:id>', methods=['GET'])
-@auth.login_required
-def get_location(id):
-
-    location_find = session.query(Location).filter_by(id=id).first()
-    if not location_find:
-        return {"message": "Location with such id does not exist"}, 404
-    user = auth.current_user()
-    if not user:
-        return {"message": "Access denied"}, 403
-
-    result = LocationSchema().dump(location_find)
-    return jsonify(result)
-
-@app.route('/api/v1/location/<int:id>', methods=['DELETE'])
-@auth.login_required
-def delete_location(id):
-    location_find = session.query(Location).filter_by(id=id).first()
-    if not location_find:
-        return {"message": "Location with such id does not exist"}, 404
-
-    ad_location = session.query(Ad).filter_by(locationId=id).first()
-    if ad_location:
-        return {"message": "Ad with such location exists"}, 403
-
-    user_location = session.query(User).filter_by(locationId=id).first()
-    if user_location:
-        return {"message": "User with such location exists"}, 403
-    user = auth.current_user()
-    if not user:
-        return {"message": "Access denied"}, 403
-    result = LocationSchema().dump(location_find)
-    session.delete(location_find)
-    session.commit()
-
-    return jsonify(result)
-
-
 # AD SERVICE
 
 # showing public notes for unauthorized users
@@ -371,13 +332,3 @@ def get_ads_for_user(id):
 
     return jsonify(public + local)
 
-
-# showing locations
-@app.route('/api/v1/service/locations', methods=['GET'])
-def get_locations():
-    locations = session.query(Location).all()
-
-    schema = LocationSchema(many=True)
-    result = (schema.dump(locations))
-
-    return jsonify(result)

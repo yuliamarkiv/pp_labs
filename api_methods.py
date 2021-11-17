@@ -4,14 +4,15 @@ from schemas import UserSchema, LocationSchema, AdSchema
 from models import *
 from marshmallow import ValidationError
 import bcrypt
-
+from flask_httpauth import HTTPBasicAuth
 app = Flask(__name__)
+session = Session()
+auth = HTTPBasicAuth()
 
 
 # USER METHODS
 @app.route('/api/v1/user', methods=["POST"])
 def create_user():
-    session = Session()
 
     data = request.get_json()
     if not data:
@@ -48,50 +49,42 @@ def create_user():
     result = UserSchema().dump(the_user)
     return jsonify(result)
 
-
-@app.route('/api/v1/user/login', methods=['GET'])
-def login_user():
-    session = Session()
-
-    data = request.get_json()
-    if not data:
-        return {"message": "No input data provided"}, 400
-
-    user_find = session.query(User).filter_by(username=data['username']).first()
-    if not user_find:
-        return {"message": "User with such username does not exist"}, 404
-
-    if not bcrypt.checkpw(data['password'].encode("utf-8"), user_find.password.encode("utf-8")):
-        return {"message": "Provided password are invalid"}, 400
-
-    result = UserSchema().dump(user_find)
-    return jsonify(result)
+@auth.verify_password
+def verify_password(username, password):
+   user = session.query(User).filter_by(username= username).first()
+   if not user:
+       return False
+   if not bcrypt.checkpw(password.encode("utf-8"), user.password.encode("utf-8")):
+       return False
+   if user:
+       return user
 
 
 @app.route('/api/v1/user/<string:username>', methods=['GET'])
+@auth.login_required
 def get_user(username):
-    session = Session()
-
     user_find = session.query(User).filter_by(username=username).first()
     if not user_find:
         return {"message": "User with such username does not exist"}, 404
+    if auth.username() != username:
+        return {"Access denied"}, 403
 
     result = UserSchema().dump(user_find)
     return jsonify(result)
 
 
 @app.route('/api/v1/user/<string:username>', methods=['PUT'])
+@auth.login_required
 def update_user(username):
-    session = Session()
-
     data = request.get_json()
     if not data:
         return {"message": "No input data provided"}, 400
-
-    user_find = session.query(User).filter_by(username=username).first()
+    user_find = auth.current_user()
+    if auth.username() != username:
+        return {"message": "Access denied"},403
+    # user_find = session.query(User).filter_by(username=username).first()
     if not user_find:
         return {"message": "User with such name does not exist"}, 400
-
     if 'id' in data:
         return {"message": "You can not change the id"}, 400
 
@@ -125,15 +118,16 @@ def update_user(username):
     return jsonify(result)
 
 
-@app.route('/api/v1/user/<string:name>', methods=['DELETE'])
-def delete_user(name):
-    session = Session()
-
-    user_find = session.query(User).filter_by(name=name).first()
+@app.route('/api/v1/user/<string:username>', methods=['DELETE'])
+@auth.login_required
+def delete_user(username):
+    user = auth.current_user()
+    user_find = session.query(User).filter_by(username=username).first()
     if not user_find:
         return {"message": "User with such name does not exists"}, 404
-
-    stat_find = session.query(Ad).filter_by(userId=id).first()
+    if user.username != user_find.username:
+        return {"message": "Access denied"}, 403
+    stat_find = session.query(Ad).filter_by(userId=user_find.id).first()
     if stat_find:
         return {"message": "This user has ads"}, 403
 
@@ -146,17 +140,13 @@ def delete_user(name):
 
 
 # AD METHODS
-@app.route('/api/v1/ad', methods=['POST'])
-def create_ad():
-    session = Session()
 
+@app.route('/api/v1/ad', methods=['POST'])
+@auth.login_required
+def create_ad():
     data = request.get_json()
     if not data:
         return {"message": "No input data provided"}, 400
-
-    if 'userId' not in data:
-        return {"message": "No required data {userId} provided"}, 400
-
     if 'name' not in data:
         return {"message": "No required data {name} provided"}, 400
 
@@ -172,7 +162,8 @@ def create_ad():
     if 'id' in data:
         return {"message": "You can not change id"}, 401
 
-    user_find = session.query(User).filter_by(id=data['userId']).first()
+    # user_find = session.query(User).filter_by(id=data['userId']).first()
+    user_find = auth.current_user()
     if not user_find:
         return {"message": "User with such id doesnt exists"}, 404
 
@@ -186,6 +177,7 @@ def create_ad():
     except ValidationError as err:
         return err.messages, 422
     the_ad = Ad(**ad_data)
+    the_ad.userId = user_find.id
 
     session.add(the_ad)
     session.commit()
@@ -196,7 +188,6 @@ def create_ad():
 
 @app.route('/api/v1/ad/<int:id>', methods=['GET'])
 def get_ad(id):
-    session = Session()
 
     ad_find = session.query(Ad).filter_by(id=id).first()
     if not ad_find:
@@ -210,16 +201,18 @@ def get_ad(id):
 
 
 @app.route('/api/v1/ad/<int:id>', methods=['PUT'])
+@auth.login_required
 def update_ad(id):
-    session = Session()
-
     data = request.get_json()
     if not data:
         return {"message": "No input data provided"}, 400
 
     ad_find = session.query(Ad).filter_by(id=id).first()
+    user = auth.current_user()
     if not ad_find:
         return {"message": "Ad with such id does not exist"}, 400
+    if user.id != ad_find.userId:
+        return {"message": "Access denied"},403
 
     if 'id' in data:
         return {"message": "You can not change the id"}, 400
@@ -250,13 +243,15 @@ def update_ad(id):
 
 
 @app.route('/api/v1/ad/<int:id>', methods=['DELETE'])
+@auth.login_required
 def delete_ad(id):
-    session = Session()
 
     ad_find = session.query(Ad).filter_by(id=id).first()
+    user = auth.current_user()
     if not ad_find:
         return {"message": "Ad with such id does not exist"}, 404
-
+    if user.id != ad_find.userId:
+        return {"message": "Access denied"}, 403
     result = AdSchema().dump(ad_find)
     session.delete(ad_find)
     session.commit()
@@ -266,8 +261,8 @@ def delete_ad(id):
 
 # LOCATION METHODS
 @app.route('/api/v1/location', methods=['POST'])
+@auth.login_required
 def create_location():
-    session = Session()
 
     data = request.get_json()
     if not data:
@@ -279,6 +274,9 @@ def create_location():
         return {"message": "You can not change id"}, 401
 
     location_find = session.query(Location).filter_by(name=data['name']).first()
+    user = auth.current_user()
+    if not user:
+        return {"message": "Access denied"}, 403
     if location_find:
         return {"message": "Location already exists"}, 400
 
@@ -294,93 +292,12 @@ def create_location():
     result = LocationSchema().dump(the_location)
     return jsonify(result)
 
-
-@app.route('/api/v1/location/<int:id>', methods=['GET'])
-def get_location(id):
-    session = Session()
-
-    location_find = session.query(Location).filter_by(id=id).first()
-    if not location_find:
-        return {"message": "Location with such id does not exist"}, 404
-
-    result = LocationSchema().dump(location_find)
-    return jsonify(result)
-
-
-@app.route('/api/v1/location/<int:id>', methods=['PUT'])
-def update_location(id):
-    session = Session()
-
-    data = request.get_json()
-    if not data:
-        return {"message": "No input data provided"}, 400
-
-    location_find = session.query(Location).filter_by(id=id).first()
-    if not location_find:
-        return {"message": "Location with such id does not exist"}, 400
-
-    if 'id' in data:
-        return {"message": "You can not change the id"}, 400
-
-    if 'name' in data:
-        check_user = session.query(Location).filter_by(name=data['name']).first()
-        if check_user:
-            return {"message": "Location already exists"}, 400
-
-    ad_location = session.query(Ad).filter_by(locationId=id).first()
-    if ad_location:
-        return {"message": "Ad with such location exists"}, 403
-
-    user_location = session.query(User).filter_by(locationId=id).first()
-    if user_location:
-        return {"message": "User with such location exists"}, 403
-
-    attributes = Location.__dict__.keys()
-
-    for key, value in data.items():
-        if key == 'id':
-            return {"message": "You can not change id"}, 403
-
-        if key not in attributes:
-            return {"message": "Invalid data provided"}, 400
-
-        setattr(location_find, key, value)
-
-    session.commit()
-    result = LocationSchema().dump(location_find)
-
-    return jsonify(result)
-
-
-@app.route('/api/v1/location/<int:id>', methods=['DELETE'])
-def delete_location(id):
-    session = Session()
-
-    location_find = session.query(Location).filter_by(id=id).first()
-    if not location_find:
-        return {"message": "Location with such id does not exist"}, 404
-
-    ad_location = session.query(Ad).filter_by(locationId=id).first()
-    if ad_location:
-        return {"message": "Ad with such location exists"}, 403
-
-    user_location = session.query(User).filter_by(locationId=id).first()
-    if user_location:
-        return {"message": "User with such location exists"}, 403
-
-    result = LocationSchema().dump(location_find)
-    session.delete(location_find)
-    session.commit()
-
-    return jsonify(result)
-
-
 # AD SERVICE
 
 # showing public notes for unauthorized users
 @app.route('/api/v1/service/ads', methods=['GET'])
 def get_public_ads():
-    session = Session()
+
 
     find_ads = session.query(Ad).filter_by(locationId=None).all()
 
@@ -391,13 +308,17 @@ def get_public_ads():
 
 
 # showing notes for authorized user (including all: public and accessible local ads for specific user)
+
 @app.route('/api/v1/service/user/<int:id>', methods=['GET'])
+@auth.login_required
 def get_ads_for_user(id):
-    session = Session()
 
     user_find = session.query(User).filter_by(id=id).first()
+    user = auth.current_user()
     if not user_find:
         return {"message": "User with such id does not exist"}, 404
+    if user.id != id:
+        return {"message": "Access denied"},403
 
     public_ads = session.query(Ad).filter_by(locationId=None).all()
 
@@ -415,8 +336,6 @@ def get_ads_for_user(id):
 # showing locations
 @app.route('/api/v1/service/locations', methods=['GET'])
 def get_locations():
-    session = Session()
-
     locations = session.query(Location).all()
 
     schema = LocationSchema(many=True)

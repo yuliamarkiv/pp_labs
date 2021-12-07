@@ -1,13 +1,18 @@
 from flask import jsonify, request, Flask
-from dbcomands import Session
-from schemas import UserSchema, LocationSchema, AdSchema
-from models import *
+from lab_8.dbcomands import Session
+from lab_8.schemas import UserSchema, LocationSchema, AdSchema
+from lab_8.models import *
 from marshmallow import ValidationError
 import bcrypt
 from flask_httpauth import HTTPBasicAuth
 app = Flask(__name__)
 session = Session()
 auth = HTTPBasicAuth()
+
+if session.query(Location).first() is None:
+    location = Location(name='Town')
+    session.add(location)
+    session.commit()
 
 
 # USER METHODS
@@ -49,15 +54,16 @@ def create_user():
     result = UserSchema().dump(the_user)
     return jsonify(result)
 
+
 @auth.verify_password
 def verify_password(username, password):
-   user = session.query(User).filter_by(username= username).first()
-   if not user:
-       return False
-   if not bcrypt.checkpw(password.encode("utf-8"), user.password.encode("utf-8")):
-       return False
-   if user:
-       return user
+    user = session.query(User).filter_by(username= username).first()
+    if not user:
+        return False
+    if not bcrypt.checkpw(password.encode("utf-8"), user.password.encode("utf-8")):
+        return False
+    if user:
+        return user
 
 
 @app.route('/api/v1/user/<string:username>', methods=['GET'])
@@ -67,7 +73,7 @@ def get_user(username):
     if not user_find:
         return {"message": "User with such username does not exist"}, 404
     if auth.username() != username:
-        return {"Access denied"}, 403
+        return {"message": "Access denied"}, 403
 
     result = UserSchema().dump(user_find)
     return jsonify(result)
@@ -81,7 +87,7 @@ def update_user(username):
         return {"message": "No input data provided"}, 400
     user_find = auth.current_user()
     if auth.username() != username:
-        return {"message": "Access denied"},403
+        return {"message": "Access denied"}, 403
     # user_find = session.query(User).filter_by(username=username).first()
     if not user_find:
         return {"message": "User with such name does not exist"}, 400
@@ -245,7 +251,6 @@ def update_ad(id):
 @app.route('/api/v1/ad/<int:id>', methods=['DELETE'])
 @auth.login_required
 def delete_ad(id):
-
     ad_find = session.query(Ad).filter_by(id=id).first()
     user = auth.current_user()
     if not ad_find:
@@ -318,7 +323,7 @@ def get_ads_for_user(id):
     if not user_find:
         return {"message": "User with such id does not exist"}, 404
     if user.id != id:
-        return {"message": "Access denied"},403
+        return {"message": "Access denied"}, 403
 
     public_ads = session.query(Ad).filter_by(locationId=None).all()
 
@@ -342,3 +347,7 @@ def get_locations():
     result = (schema.dump(locations))
 
     return jsonify(result)
+
+
+if __name__ == "__main__":
+    app.run(debug = True)

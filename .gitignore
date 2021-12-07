@@ -1,4 +1,4 @@
 pp_labs/
 .idea/
-__pycacha__/
+__pycache__/
 .venv/

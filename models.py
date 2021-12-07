@@ -5,7 +5,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 
 
-engine = create_engine("mysql+mysqlconnector://root:password@localhost/pp_labs")
+engine = create_engine("mysql+mysqlconnector://root:A2452756b@127.0.0.1/adservice")
 Base = declarative_base()
 
 

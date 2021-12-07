@@ -16,7 +16,7 @@ curl --user Yaryna:12345 --request curl -X GET http://127.0.0.1:5000/api/v1/user
 
 AD
 AUTHORIZED
-curl --user Mia:1233 --request curl -X POST -H "Content-Type:application/json" --data-binary "{\"name\":\"Sell boots\", \"text\":\"Mustang boots with warm fur inside, size 43, manufacturer Portugal\", \"price\": \"123.56\", \"currency\":\"USD\", \"date\":\"2019-05-17\"}" http://127.0.0.1:5000/api/v1/ad
+curl --user Yaryna:12345 --request curl -X POST -H "Content-Type:application/json" --data-binary "{\"name\":\"Sell boots\", \"text\":\"Mustang boots with warm fur inside, size 43, manufacturer Portugal\", \"price\": \"123.56\", \"currency\":\"USD\", \"date\":\"2019-05-17\"}" http://127.0.0.1:5000/api/v1/ad
 curl --user Yulia:123 --request curl -X POST -H "Content-Type:application/json" --data-binary "{\"name\":\"Sell shoes\", \"text\":\"Sell smth\", \"price\": \"123.56\", \"currency\":\"USD\", \"date\":\"2019-05-17\"}" http://127.0.0.1:5000/api/v1/ad
 
 curl --user Yaryna:12345 --request curl -X GET http://127.0.0.1:5000/api/v1/ad/4
@@ -28,7 +28,7 @@ curl --user Yaryna:12345 --request  curl -X DELETE http://127.0.0.1:5000/api/v1/
 
 
 LOCATION
-curl --user Yaryna:123455 --request curl -X POST -H "Content-Type:application/json" --data-binary "{\"name\":\"Kyiv\"}" http://127.0.0.1:5000/api/v1/location
+curl --user Yaryna:12345 --request curl -X POST -H "Content-Type:application/json" --data-binary "{\"name\":\"Kyiv\"}" http://127.0.0.1:5000/api/v1/location
 
 
 
